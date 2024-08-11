@@ -34,15 +34,15 @@ struct fast {
     }
 } fast;
 int N, X[200000], Y[200000];
-ll K, a[200001], b[200001];
+ll K, cum_X[200001], cum_Y[200001];
 
-void f(int *X, ll *a) {
+void calc_cum(int *X, ll *cum) {
     sort(X, X + N);
     for (int i = 0; i < N; ++i)
-        a[i + 1] = X[i] + a[i];
+        cum[i + 1] = X[i] + cum[i];
 }
 
-ll h(int l, int r, int *X, ll *a) {
+ll cost_lr(int l, int r, int *X, ll *a) {
     ll t = 0;
     int idx = lower_bound(X, X + N, l) - X;
     t += (ll)l * idx - (a[idx] - a[0]);
@@ -51,13 +51,13 @@ ll h(int l, int r, int *X, ll *a) {
     return t;
 }
 
-ll g(int w, int *X, ll *a) {
+ll cost_w(int w, int *X, ll *a) {
     if (X[N - 1] - X[0] <= w) return 0;
     ll val = K + 1;
 
     for (int i = 0; i < N; ++i) {
-        chmin(val, h(X[i], X[i] + w, X, a));
-        chmin(val, h(X[i] - w, X[i], X, a));
+        chmin(val, cost_lr(X[i], X[i] + w, X, a));
+        chmin(val, cost_lr(X[i] - w, X[i], X, a));
     }
 
     return val;
@@ -66,14 +66,13 @@ ll g(int w, int *X, ll *a) {
 int main() {
     cin >> N >> K;
     for (int i = 0; i < N; ++i) cin >> X[i] >> Y[i];
-    f(X, a);
-    f(Y, b);
+    calc_cum(X, cum_X);
+    calc_cum(Y, cum_Y);
 
     int ok = 1e9, ng = -1;
     while (abs(ok - ng) > 1) {
         int m = (ok + ng) / 2;
-        ll c = g(m, X, a) + g(m, Y, b);
-        // cerr << m << ':' << c << '\n';
+        ll c = cost_w(m, X, cum_X) + cost_w(m, Y, cum_Y);
         (c <= K ? ok : ng) = m;
     }
     cout << ok << '\n';
